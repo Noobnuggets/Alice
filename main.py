@@ -7,7 +7,7 @@ from tqdm import tqdm
 from trading_functions import *
 
 # Import historical data
-data = pd.read_csv("Data/bitstampUSD_1-min_data_2012-01-01_to_2018-01-08.csv")
+data = pd.read_csv("Data/Bitstamp_1m_USDBTC.csv")
 
 # Drop non-important columns
 data.drop('Weighted_Price', axis=1, inplace=True)
@@ -24,7 +24,7 @@ price.drop_duplicates(keep=False, inplace=True) #probably useless
 
 #Find relative extrema
 
-err_allowed = 50/100.0
+err_allowed = 10/100.0
 
 price = price.values
 labels = ["Gartley", "Butterfly", "Bat", "Crab", "ABCD"]
@@ -71,7 +71,7 @@ for i in tqdm(range(100, len(price)-100)):
 				start = np.array(current_idx).min()
 				end = np.array(current_idx).max()
 
-				pips, closing_stat = walk_forward(price[end:], harmonics[j], slippage=0, stop=25)
+				pips, closing_stat = walk_forward(price[end:], harmonics[j], slippage=0, stop=15)
 				total_closing += closing_stat
 				pnl = np.append(pnl, pips)
 
