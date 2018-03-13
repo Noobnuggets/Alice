@@ -29,6 +29,7 @@ err_allowed = 10/100.0
 price = price.values
 labels = ["Gartley", "Butterfly", "Bat", "Crab", "ABCD"]
 
+
 pattern_performance = {"Bullish Gartley":0,
 						"Bullish Butterfly":0,
 						"Bullish Bat":0,
@@ -39,11 +40,31 @@ pattern_performance = {"Bullish Gartley":0,
 						"Bearish Bat":0,
 						"Bearish Crab":0,
 						"Bearish ABCD":0}
-
+patterns_successes = {"Bullish Gartley":[],
+						"Bullish Butterfly":[],
+						"Bullish Bat":[],
+						"Bullish Crab":[],
+						"Bullish ABCD":[],
+						"Bearish Gartley":[],
+						"Bearish Butterfly":[],
+						"Bearish Bat":[],
+						"Bearish Crab":[],
+						"Bearish ABCD":[]}
+patterns_failures = {"Bullish Gartley":[],
+						"Bullish Butterfly":[],
+						"Bullish Bat":[],
+						"Bullish Crab":[],
+						"Bullish ABCD":[],
+						"Bearish Gartley":[],
+						"Bearish Butterfly":[],
+						"Bearish Bat":[],
+						"Bearish Crab":[],
+						"Bearish ABCD":[]}
 pnl = []
 correct_pats = 0
 pats = 0
 total_closing = 0
+slippage = 1/100
 for i in tqdm(range(100, len(price)-100)):
 	current_idx, current_pat, start, end = peak_detect2(price[:i])
 
@@ -73,9 +94,12 @@ for i in tqdm(range(100, len(price)-100)):
 
 				pips, closing_stat = walk_forward(price[end:], harmonics[j], slippage=0, stop=15)
 				total_closing += closing_stat
+				pips -= slippage #account for slippage
 				pnl = np.append(pnl, pips)
 
 				pattern_performance[label] += pips
+
+				print(data["vol"][j][])
 				cumpips = pnl.cumsum()
 
 				if pips > 0:
