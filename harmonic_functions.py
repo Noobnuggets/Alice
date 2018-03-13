@@ -143,7 +143,7 @@ def is_crab(moves, err_allowed):
 	else:
 		return np.NaN
 
-def is_ABCD(moves, err_allowed):
+def is_abcd(moves, err_allowed):
 	#XA is not included
 	AB = moves[1]
 	BC = moves[2]

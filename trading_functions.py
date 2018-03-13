@@ -39,4 +39,6 @@ def walk_forward(price, sign, slippage=0, stop=10):
 				if i == 1:
 					return 0, 1 #Dont reward closing on first candle
 				return (price[0] - stop_loss) - slippage, 0
-
+	else:
+		print("Something went wrong!")
+		print(price, sign, slippage, stop)
