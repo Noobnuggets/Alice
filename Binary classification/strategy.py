@@ -41,9 +41,10 @@ hma = hull_moving_average(hullma_source, hullma_period)
 still_open = 0
 both_hit = 0
 equity = 100
+fee = 0.2
 
 # +2 / -2 for hullma comparisson in long_cnd and short_cnd
-for i in range(hullma_period+3, len(closes)+1):
+for i in range(hullma_period+3, len(closes)):
 	current_hma = hma[-3+i:i] #last 3 points of hma
 	entry_price = closes[i]
 	
@@ -60,10 +61,10 @@ for i in range(hullma_period+3, len(closes)+1):
 			both_hit += 1
 
 		elif tp_hit:
-			equity += (long_tp - fee)
+			equity += (long_tp - (fee*2))
 
 		elif sl_hit:
-			equity -= (long_sl + fee)
+			equity -= (long_sl + (fee*2))
 
 		else:
 			still_open += 1
@@ -81,10 +82,10 @@ for i in range(hullma_period+3, len(closes)+1):
 			both_hit += 1
 
 		elif tp_hit:
-			equity += (short_tp - fee)
+			equity += (short_tp - (fee*2))
 
 		elif sl_hit:
-			equity -= (short_sl + fee)
+			equity -= (short_sl + (fee*2))
 		
 		else:
 			still_open += 1
