@@ -1,6 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
+def long_cnd(hmas):
+	return hmas[1] < hmas[2] and hmas[0] > hmas[1]
+
+def short_cnd(hmas):
+	return hmas[1] > hmas[2] and hmas[0] < hmas[1]
+
 def weighted_moving_average(prices, period):
 	assert type(period) is int
 
@@ -24,7 +30,41 @@ def hull_moving_average(prices, period):
 	hma = weighted_moving_average(wma_res, int(round(np.sqrt(period))))
 	return hma
 
-def walk_forward(highs, lows, trade_direction, entry_price, take_profit, stop_loss):
+def walk_forward_long(highs, lows, entry_price, take_profit, stop_loss):
 	assert len(highs) == len(lows), "walk_forward recieved missmatching lows and highs:\nlen(highs): " + str(len(highs)) + "\nlen(lows): " + str(len(lows))
-	assert trade_direction == -1 or trade_direction == 1, "walk_forward was unable to determine trade_direction, -1 or 1 is acceptable"
-	return True, False
+
+	tp_hit = False
+	sl_hit = False
+
+	future_candles_amt = len(highs) #Could be lows aswell
+
+	#If we are going long, aka buying the secondary currency(BTC)
+	for i in range(1, future_candles_amt):
+
+		percent_move_highs = ((highs[i] - entry_price) / entry_price) * 100 #Positive
+		percent_move_lows = ((lows[i] - entry_price) / entry_price) * 100 #Negative
+
+		sl_hit = percent_move_lows <= stop_loss
+		tp_hit = percent_move_highs > take_profit
+		if sl_hit or tp_hit:
+			break
+	return tp_hit, sl_hit
+
+def walk_forward_short(highs, lows, entry_price, take_profit, stop_loss):
+	assert len(highs) == len(lows), "walk_forward recieved missmatching lows and highs:\nlen(highs): " + str(len(highs)) + "\nlen(lows): " + str(len(lows))
+
+	tp_hit = False
+	sl_hit = False
+
+	future_candles_amt = len(highs) #Could be lows aswell
+
+	#If we are going short
+	for i in range(1, future_candles_amt):
+		percent_move_highs = ((highs[i] - entry_price) / entry_price) * 100 #Positive
+		percent_move_lows = ((lows[i] - entry_price) / entry_price) * 100 #Negative
+
+		tp_hit = percent_move_lows < take_profit
+		sl_hit = percent_move_highs >= stop_loss
+		if sl_hit or tp_hit:
+			break
+	return tp_hit, sl_hit

@@ -2,9 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 #from scipy import stats
+def plot(arrays):
+	for a in arrays:
+		plt.plot(a)
+	plt.show()
+
 def load_ticks(tick_count=False):
 	#Read in data and execute some transformations
-	path = "Data/sample.csv"
+	path = "Data/.coinbaseUSD.csv"
 	if not tick_count or tick_count == "All":
 		data_frame = pd.read_csv(path,
 							names=["dates", 'price', 'volume'],
