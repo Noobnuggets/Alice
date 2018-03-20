@@ -9,7 +9,7 @@ def plot(arrays):
 
 def load_ticks(tick_count=False):
 	#Read in data and execute some transformations
-	path = "Data/.coinbaseUSD.csv"
+	path = "Data/sample.csv"
 	if not tick_count or tick_count == "All":
 		data_frame = pd.read_csv(path,
 							names=["dates", 'price', 'volume'],

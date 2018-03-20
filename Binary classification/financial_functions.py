@@ -1,14 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
-def long_cnd(hmas):
-	return hmas[1] < hmas[2] and hmas[0] > hmas[1]
-
-def short_cnd(hmas):
-	return hmas[1] > hmas[2] and hmas[0] < hmas[1]
 
 def weighted_moving_average(prices, period):
-	assert type(period) is int
+	assert type(period) is int, "weighted_moving_average period invalid type: " + str(type(period))
 
 	weights = [i/period for i in range(period)]
 	wma = [np.NaN for _ in range(period)]
@@ -17,7 +12,7 @@ def weighted_moving_average(prices, period):
 	return np.array(wma)
 
 def hull_moving_average(prices, period):
-	assert type(period) is int, "hull_moving_average recieved a period of type: " + str(type(period)) + " Only int allowed!"
+	assert type(period) is int, "hull_moving_average period invalid type: " + str(type(period))
 	#Source: https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/hull-moving-average
 	#1. Calculate a Weighted Moving Average with period n / 2 and multiply it by 2
 	wma1 = weighted_moving_average(prices, int(round(period/2))) * 2
@@ -30,41 +25,17 @@ def hull_moving_average(prices, period):
 	hma = weighted_moving_average(wma_res, int(round(np.sqrt(period))))
 	return hma
 
-def walk_forward_long(highs, lows, entry_price, take_profit, stop_loss):
-	assert len(highs) == len(lows), "walk_forward recieved missmatching lows and highs:\nlen(highs): " + str(len(highs)) + "\nlen(lows): " + str(len(lows))
+def simple_moving_average(prices, period):
+	NaNs = [np.NaN for _ in range(period)]
+	NaNs = np.array(NaNs)
+	sma = np.append(NaNs, np.cumsum(prices, dtype=float))
+	sma[period:] = sma[period:] - sma[:-period]
+	return sma[period - 1:] / period
 
-	tp_hit = False
-	sl_hit = False
+def exponential_moving_average(prices, period):
+	weights = np.exp(np.linspace(1, 0, period))
+	weights /= weights.sum()
 
-	future_candles_amt = len(highs) #Could be lows aswell
-
-	#If we are going long, aka buying the secondary currency(BTC)
-	for i in range(1, future_candles_amt):
-
-		percent_move_highs = ((highs[i] - entry_price) / entry_price) * 100 #Positive
-		percent_move_lows = ((lows[i] - entry_price) / entry_price) * 100 #Negative
-
-		sl_hit = percent_move_lows <= stop_loss
-		tp_hit = percent_move_highs > take_profit
-		if sl_hit or tp_hit:
-			break
-	return tp_hit, sl_hit
-
-def walk_forward_short(highs, lows, entry_price, take_profit, stop_loss):
-	assert len(highs) == len(lows), "walk_forward recieved missmatching lows and highs:\nlen(highs): " + str(len(highs)) + "\nlen(lows): " + str(len(lows))
-
-	tp_hit = False
-	sl_hit = False
-
-	future_candles_amt = len(highs) #Could be lows aswell
-
-	#If we are going short
-	for i in range(1, future_candles_amt):
-		percent_move_highs = ((highs[i] - entry_price) / entry_price) * 100 #Positive
-		percent_move_lows = ((lows[i] - entry_price) / entry_price) * 100 #Negative
-
-		tp_hit = percent_move_lows < take_profit
-		sl_hit = percent_move_highs >= stop_loss
-		if sl_hit or tp_hit:
-			break
-	return tp_hit, sl_hit
+	ema = np.convolve(prices, weights)[:len(prices)]
+	ema[:period] = np.NaN
+	return ema
