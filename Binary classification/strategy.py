@@ -4,21 +4,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from financial_functions import *
 from agent import *
-from operator import attrgetter
-def init_population(population_amt, ma_sources):
-	traders = [Trader() for _ in range(population_amt)]
-	for trader in traders:
-		period = trader.conf["ma_period"]
-		ma_func = trader.conf["ma_func"]
-		ma_source = trader.conf["ma_source"]
-		trader.conf["ma"] = ma_func(ma_sources[ma_source], period)
-
-	return traders
+from genetics import *
 
 
 def main():
 	price_amt = int(1e10)
-	candle_period = "1H"
+	candle_period = "15min"
 	ohlcv = load_ohlcv(candle_period=candle_period, price_amt=price_amt)
 
 	opens = ohlcv.open.values
@@ -40,26 +31,44 @@ def main():
 	ma_maximum_period = 500
 
 	#Genetic config
-	population_amt = 1
-	generations = 1
-	traders = init_population(population_amt=population_amt, ma_sources=ma_sources)
+	population_amt = 100
+	generations = 5
+
+	#Metrics
+	average_profits = [0]
+
+	traders = init_population(population_amt=population_amt)
+	setup_mas(traders, ma_sources=ma_sources)
 
 	for gen in range(generations):
 
-		#Test every trader on every trade oppurtinity
+		#Test every trader on every trade oppurtinity/candle
 		for i in range(ma_maximum_period+3, len(closes)):
 			for trader in traders:
 				trader.event(i, closes[i], lows[i], highs[i])
 
+		
+		#Generation done
+		#Collect metrics on a per-generation basis
+		average_profits.append(average_profit_per_generation(traders))
+
 		#Sort traders based on performance
-		traders.sort(key = attrgetter('profit'))
-		print(traders[0].profit)
-
+		traders = sort_traders(traders)
+		
 		#Reset metrics for traders for next generation
-		for trader in traders:
-			trader.reset()
+		reset_metrics(traders)
 
-	for trader in traders:
-		plt.plot(trader.profit_over_time)
+		#Remove the worst traders
+		new_traders = kill_worst(traders, survival_factor=0.7)
+		
+
+		#Create children from the best traders, aka crossover
+		new_traders = crossover(new_traders, mutation_factor=0.01)
+		print(len(new_traders))
+		setup_mas(new_traders, ma_sources=ma_sources)
+
+		
+	plt.plot(average_profits)
 	plt.show()
+
 main()

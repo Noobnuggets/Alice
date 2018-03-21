@@ -12,8 +12,8 @@ class Trader():
 		#Metrics
 		self.profit = 0
 
-		self.profit_over_time = []
-		self.profit_over_trades = []
+		self.profit_over_time = [0]
+		self.profit_over_trades = [0]
 
 		self.long_trades = 0
 		self.short_trades = 0
@@ -58,7 +58,7 @@ class Trader():
 		assert self.conf["short_tp"] < 0, "short_tp is invalid: " + str(self.conf["short_tp"])
 		assert self.conf["short_sl"] > 0, "short_sl is invalid: " + str(self.conf["short_sl"])
 		assert type(self.conf["ma_period"]) is int, "ma_period is invalid type: " + str(type(self.conf["ma_period"]))
-		assert self.conf["ma_period"] > 3 and self.conf["ma_period"] < 1000, "ma_period is invalid: " + str(self.conf["ma_period"])
+		assert self.conf["ma_period"] >= 3 and self.conf["ma_period"] < 1000, "ma_period is invalid: " + str(self.conf["ma_period"])
 
 	def long_cnd(self, ma):
 		assert len(ma) == 3, "long_cnd ma invalid len: " + str(len(ma))
@@ -165,7 +165,7 @@ class Trader():
 		elif tp_hit and sl_hit:
 			self.short_position = False
 			self.both_hit += 1
-			
+
 	def reset(self):
 		self.profit = 0
 
