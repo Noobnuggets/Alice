@@ -40,7 +40,7 @@ class Trader():
 
 		#conf stuff
 		ma_sources = ["open", "close", "low", "high", "hl2", "hlc3", "ohlc4"]
-		ma_types = [hull_moving_average, weighted_moving_average, simple_moving_average, exponential_moving_average]
+		ma_types = [hull_moving_average, weighted_moving_average, exponential_moving_average]
 		self.conf = conf
 		
 		max_range = 20
@@ -112,6 +112,7 @@ class Trader():
 
 
 	def handle_long(self, current_high, current_low, current_close, current_i):
+		assert self.long_position
 		percent_move_high = ((current_high - self.entry_price) / self.entry_price) * 100
 		percent_move_low = ((current_low - self.entry_price) / self.entry_price) * 100
 
@@ -165,8 +166,10 @@ class Trader():
 
 
 		#Close due to short cnd
-		elif short_cnd(current_ma):
+		elif self.short_cnd(current_ma):
 			self.long_position = False
+			self.short_position = True
+			self.short_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive
@@ -205,6 +208,7 @@ class Trader():
 					self.profit_over_trades.append(self.profit)
 
 	def handle_short(self, current_high, current_low, current_close, current_i):
+		assert self.short_position
 		percent_move_high = ((current_high - self.entry_price) / self.entry_price) * 100
 		percent_move_low = ((current_low - self.entry_price) / self.entry_price) * 100
 
@@ -212,7 +216,7 @@ class Trader():
 		tp_hit = percent_move_low < self.conf["short_tp"]
 
 		current_ma = self.conf["ma"][-3+current_i:current_i] #three lasts point, used for slope
-		
+
 		#Close short with stop-loss
 		if sl_hit and not tp_hit:
 			self.short_position = False
@@ -257,8 +261,10 @@ class Trader():
 		
 		
 		#Close due to long cnd
-		elif long_cnd(current_ma):
+		elif self.long_cnd(current_ma):
 			self.short_position = False
+			self.long_position = True
+			self.long_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive

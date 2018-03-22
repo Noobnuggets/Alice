@@ -9,7 +9,12 @@ from time import time
 
 
 def main():
-	candle_period = "30min"
+	candle_period = "1H"
+	ma_maximum_period = 50
+	population_amt = 100
+	generations = 10
+	survival_rate = 0.1
+	mutation_factor = 0.05
 	ohlcv = load_ohlcv(candle_period=candle_period)
 
 	opens = ohlcv.open.values
@@ -29,11 +34,12 @@ def main():
 		"ohlc4":(opens+highs+lows+closes)/4
 		}
 
+
 	ma_maximum_period = 50
 
 	#Genetic config
 	population_amt = 100
-	generations = 2
+	generations = 10
 
 	#Metrics
 	average_fitness = [0]
@@ -79,49 +85,11 @@ def main():
 			reset_metrics(traders)
 
 	print(traders[0].conf)
-
-	plt.title("Average fitness / generation")
-	plt.plot(average_fitness)
-	plt.show()
-
-	plt.clf()
-
-	plt.title("Best Fitness / generation")
-	plt.plot(best_fitness)
-	plt.show()
-
-	plt.title("Best Profit over trades")
-	plt.plot(traders[0].profit_over_trades)
-	plt.show()
-
-	plt.clf()
-	plt.title("Best Profit over time")
-	plt.plot(traders[0].profit_over_time)
-	plt.show()
-
-	print("Long trades:", traders[0].long_trades)
-	print("short trades:", traders[0].short_trades)
-
-	print("winning trades: ", traders[0].winning_trades)
-	print("loosing trades: ", traders[0].loosing_trades)
-
-	if traders[0].loosing_trades == 0:
-		traders[0].loosing_trades = 1
-	print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
-	print("Both hit: ", traders[0].both_hit)
-
-	print("")
+	show_metrics(traders, valid=False)
 
 
 	#Validate results
 	#Make sure no train data is used
-	del ohlcv
-	del ma_sources
-	del opens
-	del highs
-	del lows
-	del closes
-	del vol
 	valid_ohlcv = load_ohlcv_valid(candle_period=candle_period)
 
 	valid_opens = valid_ohlcv.open.values
@@ -154,27 +122,6 @@ def main():
 		for trader in traders:
 			trader.event(i, valid_closes[i], valid_lows[i], valid_highs[i])
 
-
-	print(traders[0].conf)
-
-	plt.title("Best Profit over trades")
-	plt.plot(traders[0].profit_over_trades)
-	plt.show()
-
-	plt.clf()
-	plt.title("Best Profit over time")
-	plt.plot(traders[0].profit_over_time)
-	plt.show()
-
-	print("Long trades:", traders[0].long_trades)
-	print("short trades:", traders[0].short_trades)
-
-	print("winning trades: ", traders[0].winning_trades)
-	print("loosing trades: ", traders[0].loosing_trades)
-
-	if traders[0].loosing_trades == 0:
-		traders[0].loosing_trades = 1
-	print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
-	print("Both hit: ", traders[0].both_hit)
+	show_metrics(traders, valid=True)
 
 main()

@@ -34,19 +34,8 @@ def reset_metrics(traders):
 		trader.reset()
 
 def kill_worst(traders, survival_rate):
-	#return_traders = []
-	print(int(round(survival_rate)))
 	assert traders[0].fitness >= traders[1].fitness, "Traders are sorted wrong!"
 	return [traders[i] for i in range(int(round(len(traders)*survival_rate)))]
-	#return [traders[i] for i in ]
-	#new_traders = []#
-	#for trader in traders:
-		##if len(new_traders) < int(round(len(traders)*survival_factor)):
-			#new_traders.append(trader)
-		#else:
-			#break
-	
-	#return new_traders
 	
 	
 	#return [traders[i] for i in range(int(len(traders)*survival_factor))]
@@ -102,4 +91,6 @@ def fresh_dna(current_traders, population_amt):
 	assert len(current_traders) == population_amt, "Missmatching len(current_traders) and population_amt\nlen(current_traders): " + str(len(current_traders))+"\npopulation_amt: " + str(population_amt)
 
 	return current_traders
-		
+
+
+def train(candle_period, ma_maximum_period, population_amt, generations, survival_rate, mutation_factor)

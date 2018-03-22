@@ -51,3 +51,55 @@ def linnear_regression(y):
 
 
 	return (slope, r_value, std_err)
+
+def show_metrics(traders, valid=False):
+	if not valid:
+		plt.title("Average fitness / generation")
+		plt.plot(average_fitness)
+		plt.show()
+
+		plt.clf()
+
+		plt.title("Best Fitness / generation")
+		plt.plot(best_fitness)
+		plt.show()
+
+		plt.title("Best Profit over trades")
+		plt.plot(traders[0].profit_over_trades)
+		plt.show()
+
+		plt.clf()
+		plt.title("Best Profit over time")
+		plt.plot(traders[0].profit_over_time)
+		plt.show()
+
+		print("Long trades:", traders[0].long_trades)
+		print("short trades:", traders[0].short_trades)
+
+		print("winning trades: ", traders[0].winning_trades)
+		print("loosing trades: ", traders[0].loosing_trades)
+
+		if traders[0].loosing_trades == 0:
+			traders[0].loosing_trades = 1
+		print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
+		print("Both hit: ", traders[0].both_hit)
+	else:
+		plt.title("Best Profit over trades")
+		plt.plot(traders[0].profit_over_trades)
+		plt.show()
+
+		plt.clf()
+		plt.title("Best Profit over time")
+		plt.plot(traders[0].profit_over_time)
+		plt.show()
+
+		print("Long trades:", traders[0].long_trades)
+		print("short trades:", traders[0].short_trades)
+
+		print("winning trades: ", traders[0].winning_trades)
+		print("loosing trades: ", traders[0].loosing_trades)
+
+		if traders[0].loosing_trades == 0:
+			traders[0].loosing_trades = 1
+		print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
+		print("Both hit: ", traders[0].both_hit)

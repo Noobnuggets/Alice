@@ -25,12 +25,6 @@ def hull_moving_average(prices, period):
 	hma = weighted_moving_average(wma_res, int(round(np.sqrt(period))))
 	return hma
 
-def simple_moving_average(prices, period):
-	NaNs = [np.NaN for _ in range(period)]
-	NaNs = np.array(NaNs)
-	sma = np.append(NaNs, np.cumsum(prices, dtype=float))
-	sma[period:] = sma[period:] - sma[:-period]
-	return sma[period - 1:] / period
 
 def exponential_moving_average(prices, period):
 	weights = np.exp(np.linspace(1, 0, period))
