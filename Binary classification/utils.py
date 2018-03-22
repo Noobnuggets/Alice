@@ -17,15 +17,15 @@ def load_ticks(path):
 	data_frame.index = pd.to_datetime(data_frame.index, unit='s')
 	return data_frame
 
-def load_ohlcv_valid(candle_period, price_amt):
-	ticks = load_ticks("Data/validation.csv", "All")
+def load_ohlcv_valid(candle_period):
+	ticks = load_ticks("Data/validation.csv")
 	ohlcv = to_ohlcv(ticks, candle_period)
-	return ohlcv.iloc[-price_amt:]
+	return ohlcv
 
-def load_ohlcv(candle_period, price_amt):
-	ticks = load_ticks("Data/train.csv", "All")
+def load_ohlcv(candle_period):
+	ticks = load_ticks("Data/train.csv")
 	ohlcv = to_ohlcv(ticks, candle_period)
-	return ohlcv.iloc[-price_amt:]
+	return ohlcv
 
 def to_ohlcv(data_frame, period="30min"):
 	ticks = data_frame.ix[:, ['price', 'volume']]

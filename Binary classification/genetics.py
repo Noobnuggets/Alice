@@ -90,7 +90,7 @@ def crossover(traders, mutation_factor=0.1, starting_usd=100000, fee=0):
 		assert new_trader.conf["short_tp"] < 0, "short_tp is invalid: " + str(new_trader.conf["short_tp"])
 		assert new_trader.conf["short_sl"] > 0, "short_sl is invalid: " + str(new_trader.conf["short_sl"])
 		assert type(new_trader.conf["ma_period"]) is int, "ma_period is invalid type: " + str(type(new_trader.conf["ma_period"]))
-		assert new_trader.conf["ma_period"] >= 3 and new_trader.conf["ma_period"] <= 300, "ma_period is invalid: " + str(new_trader.conf["ma_period"])
+		assert new_trader.conf["ma_period"] >= 3 and new_trader.conf["ma_period"] <= 50, "ma_period is invalid: " + str(new_trader.conf["ma_period"])
 		
 		new_traders.append(new_trader)
 	return new_traders

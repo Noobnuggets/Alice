@@ -9,9 +9,8 @@ from time import time
 
 
 def main():
-	price_amt = int(1e55)
-	candle_period = "1H"
-	ohlcv = load_ohlcv(candle_period=candle_period, price_amt=price_amt)
+	candle_period = "30min"
+	ohlcv = load_ohlcv(candle_period=candle_period)
 
 	opens = ohlcv.open.values
 	highs = ohlcv.high.values
@@ -30,11 +29,11 @@ def main():
 		"ohlc4":(opens+highs+lows+closes)/4
 		}
 
-	ma_maximum_period = 300
+	ma_maximum_period = 50
 
 	#Genetic config
 	population_amt = 100
-	generations = 5
+	generations = 2
 
 	#Metrics
 	average_fitness = [0]
@@ -115,18 +114,24 @@ def main():
 
 
 	#Validate results
-	price_amt = int(1e55)
-	candle_period = "1H"
-	valid_ohlcv = load_ohlcv_valid(candle_period=candle_period, price_amt=price_amt)
+	#Make sure no train data is used
+	del ohlcv
+	del ma_sources
+	del opens
+	del highs
+	del lows
+	del closes
+	del vol
+	valid_ohlcv = load_ohlcv_valid(candle_period=candle_period)
 
-	valid_opens = ohlcv.open.values
-	valid_highs = ohlcv.high.values
-	valid_lows = ohlcv.low.values
-	valid_closes = ohlcv.close.values
-	valid_vol = ohlcv.volume.values
-	print("valid Candles:", len(opens))
+	valid_opens = valid_ohlcv.open.values
+	valid_highs = valid_ohlcv.high.values
+	valid_lows = valid_ohlcv.low.values
+	valid_closes = valid_ohlcv.close.values
+	valid_vol = valid_ohlcv.volume.values
+	print("valid Candles:", len(valid_opens))
 
-	ma_sources = {
+	valid_ma_sources = {
 		"open":valid_opens,
 		"high":valid_highs,
 		"low":valid_lows,
@@ -136,7 +141,9 @@ def main():
 		"ohlc4":(valid_opens+valid_highs+valid_lows+valid_closes)/4
 		}
 
-	ma_maximum_period = 300
+	ma_maximum_period = 50
+
+	setup_mas(traders, ma_sources=valid_ma_sources)
 
 	#Metrics
 	average_fitness = [0]
@@ -146,21 +153,9 @@ def main():
 	for i in range(ma_maximum_period+3, len(valid_closes)):
 		for trader in traders:
 			trader.event(i, valid_closes[i], valid_lows[i], valid_highs[i])
-		traders = calculate_fitness(traders)
-		average_fitness.append(average_fitness_per_generation(traders))
 
 
 	print(traders[0].conf)
-
-	plt.title("Average fitness / generation")
-	plt.plot(average_fitness)
-	plt.show()
-
-	plt.clf()
-
-	plt.title("Best Fitness / generation")
-	plt.plot(best_fitness)
-	plt.show()
 
 	plt.title("Best Profit over trades")
 	plt.plot(traders[0].profit_over_trades)
