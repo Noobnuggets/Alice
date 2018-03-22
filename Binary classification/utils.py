@@ -7,26 +7,23 @@ def plot(arrays):
 		plt.plot(a)
 	plt.show()
 
-def load_ticks(tick_count=False):
+def load_ticks(path):
 	#Read in data and execute some transformations
-	path = "Data/sample.csv"
-	if not tick_count or tick_count == "All":
-		data_frame = pd.read_csv(path,
+	data_frame = pd.read_csv(path,
 							names=["dates", 'price', 'volume'],
 							converters={"price":float, "volume":float})
 
-	else: #Load only relevent data instead of whole dataset
-		data_frame = pd.read_csv(path,
-							names=["dates", 'price', 'volume'],
-							converters={"price":float, "volume":float},
-							nrows=tick_count)
 	data_frame = data_frame.set_index(["dates"])
 	data_frame.index = pd.to_datetime(data_frame.index, unit='s')
 	return data_frame
 
+def load_ohlcv_valid(candle_period, price_amt):
+	ticks = load_ticks("Data/validation.csv", "All")
+	ohlcv = to_ohlcv(ticks, candle_period)
+	return ohlcv.iloc[-price_amt:]
 
 def load_ohlcv(candle_period, price_amt):
-	ticks = load_ticks("All")
+	ticks = load_ticks("Data/train.csv", "All")
 	ohlcv = to_ohlcv(ticks, candle_period)
 	return ohlcv.iloc[-price_amt:]
 
