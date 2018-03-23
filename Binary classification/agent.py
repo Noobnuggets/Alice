@@ -43,8 +43,8 @@ class Trader():
 		ma_types = [hull_moving_average, weighted_moving_average, exponential_moving_average]
 		self.conf = conf
 		
-		max_range = 33
-		min_range = 0.1
+		max_range = 50
+		min_range = 1
 		if self.conf is None:
 			self.conf = {
 			"ma_period":randint(3, ma_maximum_period),
@@ -168,8 +168,8 @@ class Trader():
 		#Close due to short cnd
 		elif self.short_cnd(current_ma):
 			self.long_position = False
-			self.short_trades = True
-			self.short_trades += 1
+			#self.short_trades = True
+			#self.short_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive
@@ -263,8 +263,8 @@ class Trader():
 		#Close due to long cnd
 		elif self.long_cnd(current_ma):
 			self.short_position = False
-			self.long_position = True
-			self.long_trades += 1
+			#self.long_position = True
+			#self.long_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive
@@ -344,6 +344,8 @@ class Trader():
 
 
 		_, slope, _, _, _, _ = linreg(self.profit_over_time)
-		_, slope2, _, _, _, _ = linreg(self.profit_over_trades)
-		#if slope <= 0:
-		self.fitness = (slope + slope2) / 2
+		#_, slope2, _, _, _, _ = linreg(self.profit_over_trades)
+		if slope <= 0:
+			self.fitness = slope
+		else:
+			self.fitness = slope**2

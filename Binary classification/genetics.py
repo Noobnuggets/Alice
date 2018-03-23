@@ -7,6 +7,7 @@ def calculate_fitness(traders):
 	for trader in traders:
 		trader.fitness_func()
 	return new_traders
+
 def average_fitness_per_generation(traders):
 	avg_fitness = 0
 	for trader in traders:
@@ -42,13 +43,16 @@ def kill_worst(traders, survival_rate):
 
 def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 	new_traders = []
-	for i in range(0, len(traders)-1):
-		parent_1_idx = i#randint(0, len(traders)-1)
-		parent_2_idx = i+1#randint(0, len(traders)-1)
-		#while parent_1_idx == parent_2_idx:
-			#parent_1_idx = randint(0, len(traders)-1)
-			#parent_2_idx = randint(0, len(traders)-1)
+	parent_idxs = []
+	for i in range(0, len(traders)-1, 2):
+		parent_1_idx = randint(0, len(traders)-1)
+		parent_2_idx = randint(0, len(traders)-1)
+		while parent_1_idx == parent_2_idx or parent_1_idx in parent_idxs or parent_2_idx in parent_idxs:
+			parent_1_idx = randint(0, len(traders)-1)
+			parent_2_idx = randint(0, len(traders)-1)
 
+		parent_idxs.append(parent_1_idx)
+		parent_idxs.append(parent_2_idx)
 		parent_1 = traders[parent_1_idx]
 		parent_2 = traders[parent_2_idx]
 		parent_1_dna = parent_1.conf
@@ -63,7 +67,7 @@ def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 			elif uniform(0, 1) <= mutation_factor:
 				conf[attr] = choice([parent_1_dna[attr], parent_2_dna[attr]])
 			else:
-				conf[attr] = (parent_1_dna[attr] + parent_2_dna[attr])/2
+				conf[attr] = (parent_1_dna[attr] + parent_2_dna[attr])/uniform(1.9, 2.1)
 		conf["ma_period"] = int(round(conf["ma_period"]))
 
 		choice_attr = ["ma_source", "ma_func"]
