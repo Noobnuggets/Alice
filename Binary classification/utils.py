@@ -1,11 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-#from scipy import stats
-def plot(arrays):
-	for a in arrays:
-		plt.plot(a)
-	plt.show()
+from scipy import stats
 
 def load_ticks(path):
 	#Read in data and execute some transformations
@@ -39,67 +35,109 @@ def to_ohlcv(data_frame, period="30min"):
 def normalize(array):
 	return array / array.max()
 
-def linnear_regression(y):
+
+def show_metrics(traders, average_fitness, best_fitness):
+	print("Best Trader")
+	conf = traders[0].conf
+	print("Ma period:", conf["ma_period"])
+	print("(L) take profit:", conf["long_tp"], "%")
+	print("(S) take profit:", abs(conf["short_tp"]), "%")
+	print("(L) stop loss:", abs(conf["long_sl"]), "%")
+	print("(S) stop loss", abs(conf["short_sl"]), "%")
+	print("Ma source:", conf["ma_source"])
+	print("Ma function:", conf["ma_func"])
+
+	print("Long trades:", traders[0].long_trades)
+	print("short trades:", traders[0].short_trades)
+	print("Total trades:", traders[0].long_trades + traders[0].short_trades)
+
+	print("winning trades: ", traders[0].winning_trades)
+	print("loosing trades: ", traders[0].loosing_trades)
+
+	print("Final profit:", traders[0].profit, "%")
+
+
+	if traders[0].loosing_trades == 0:
+		traders[0].loosing_trades = 1
+	print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
+	print("Both hit: ", traders[0].both_hit)
+
+
+	plt.title("Average fitness / generation")
+	plt.plot(average_fitness)
+	plt.show()
+
+	plt.clf()
+
+	plt.title("Best Fitness / generation")
+	plt.plot(best_fitness)
+	plt.show()
+
+	plt.title("Best Profit over trades")
+	plt.plot(traders[0].profit_over_trades)
+	x, slope, intercept, r_value, p_value, std_err = linreg(traders[0].profit_over_trades)
+	plt.plot(x, intercept + slope*x, 'r', label='fitted line')
+	plt.legend()
+	plt.show()
+
+	plt.clf()
+	plt.title("Best Profit over time")
+	plt.plot(traders[0].profit_over_time)
+	x, slope, intercept, r_value, p_value, std_err = linreg(traders[0].profit_over_time)
+	plt.plot(x, intercept + slope*x, 'r', label='fitted line')
+	plt.legend()
+	plt.show()
+
+
+def show_metrics_valid(traders):
+		plt.title("Best Profit over trades")
+		plt.plot(traders[0].profit_over_trades)
+		
+		x, slope, intercept, r_value, p_value, std_err = linreg(traders[0].profit_over_trades)
+		plt.plot(x, intercept + slope*x, 'r', label='fitted line')
+		plt.legend()
+		plt.show()
+
+
+		plt.clf()
+		plt.title("Best Profit over time")
+		plt.plot(traders[0].profit_over_time)
+		x, slope, intercept, r_value, p_value, std_err = linreg(traders[0].profit_over_time)
+		plt.plot(x, intercept + slope*x, 'r', label='fitted line')
+		plt.legend()
+		plt.show()
+		print("Best Trader")
+
+
+		conf = traders[0].conf
+		print("Ma period:", conf["ma_period"])
+		print("(L) take profit:", conf["long_tp"], "%")
+		print("(S) take profit:", abs(conf["short_tp"]), "%")
+		print("(L) stop loss:", abs(conf["long_sl"]), "%")
+		print("(S) stop loss", abs(conf["short_sl"]), "%")
+		print("Ma source:", conf["ma_source"])
+		print("Ma function:", conf["ma_func"])
+
+		print("Long trades:", traders[0].long_trades)
+		print("short trades:", traders[0].short_trades)
+		print("Total trades:", traders[0].long_trades + traders[0].short_trades)
+
+		print("winning trades: ", traders[0].winning_trades)
+		print("loosing trades: ", traders[0].loosing_trades)
+
+		print("Final profit:", traders[0].profit, "%")
+		if traders[0].loosing_trades == 0:
+			traders[0].loosing_trades = 1
+		print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
+		print("Both hit: ", traders[0].both_hit)
+
+
+def linreg(y):
 	x = np.arange(len(y))
 
 	slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
-	#Visualize
-	#plt.plot(x, y, 'o', label='original data')
-	#plt.plot(x, intercept + slope*x, 'r', label='fitted line')
-	#plt.legend()
-	#plt.show()
+	return x, slope, intercept, r_value, p_value, std_err
 
-
-	return (slope, r_value, std_err)
-
-def show_metrics(traders, valid=False):
-	if not valid:
-		plt.title("Average fitness / generation")
-		plt.plot(average_fitness)
-		plt.show()
-
-		plt.clf()
-
-		plt.title("Best Fitness / generation")
-		plt.plot(best_fitness)
-		plt.show()
-
-		plt.title("Best Profit over trades")
-		plt.plot(traders[0].profit_over_trades)
-		plt.show()
-
-		plt.clf()
-		plt.title("Best Profit over time")
-		plt.plot(traders[0].profit_over_time)
-		plt.show()
-
-		print("Long trades:", traders[0].long_trades)
-		print("short trades:", traders[0].short_trades)
-
-		print("winning trades: ", traders[0].winning_trades)
-		print("loosing trades: ", traders[0].loosing_trades)
-
-		if traders[0].loosing_trades == 0:
-			traders[0].loosing_trades = 1
-		print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
-		print("Both hit: ", traders[0].both_hit)
-	else:
-		plt.title("Best Profit over trades")
-		plt.plot(traders[0].profit_over_trades)
-		plt.show()
-
-		plt.clf()
-		plt.title("Best Profit over time")
-		plt.plot(traders[0].profit_over_time)
-		plt.show()
-
-		print("Long trades:", traders[0].long_trades)
-		print("short trades:", traders[0].short_trades)
-
-		print("winning trades: ", traders[0].winning_trades)
-		print("loosing trades: ", traders[0].loosing_trades)
-
-		if traders[0].loosing_trades == 0:
-			traders[0].loosing_trades = 1
-		print("profit ratio: ", traders[0].winning_trades/traders[0].loosing_trades)
-		print("Both hit: ", traders[0].both_hit)
+def visual_linreg(y):
+	x, slope, intercept, r_value, p_value, std_err = linreg(y)
+	return x, intercept + slope*x

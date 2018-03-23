@@ -10,15 +10,15 @@ def delta_y(points):
 	for i in range(int(round(len(points)/2))):pass
 
 class Trader():
-	def __init__(self, starting_USD=100000, fee=0.2, conf=None, margin=3, margin_fee = 0.1):
+	def __init__(self, ma_maximum_period, starting_USD=100000, fee=0.1, conf=None, margin=3.3, margin_fee = 0.015):
 		self.USD = starting_USD
 		self.fee = fee
 
 		#Metrics
 		self.profit = 0
 
-		self.profit_over_time = [0]
-		self.profit_over_trades = [0]
+		self.profit_over_time = []
+		self.profit_over_trades = []
 
 		self.long_trades = 0
 		self.short_trades = 0
@@ -43,11 +43,11 @@ class Trader():
 		ma_types = [hull_moving_average, weighted_moving_average, exponential_moving_average]
 		self.conf = conf
 		
-		max_range = 20
-		min_range = 3
+		max_range = 33
+		min_range = 0.1
 		if self.conf is None:
 			self.conf = {
-			"ma_period":randint(3, 50),
+			"ma_period":randint(3, ma_maximum_period),
 			"long_tp":uniform(min_range, max_range),
 			"short_tp":uniform(-max_range, -min_range),
 			"long_sl":uniform(-max_range, -min_range),
@@ -72,7 +72,7 @@ class Trader():
 		assert self.conf["short_tp"] < 0, "short_tp is invalid: " + str(self.conf["short_tp"])
 		assert self.conf["short_sl"] > 0, "short_sl is invalid: " + str(self.conf["short_sl"])
 		assert type(self.conf["ma_period"]) is int, "ma_period is invalid type: " + str(type(self.conf["ma_period"]))
-		assert self.conf["ma_period"] >= 3 and self.conf["ma_period"] <= 50, "ma_period is invalid: " + str(self.conf["ma_period"])
+		assert self.conf["ma_period"] >= 3 and self.conf["ma_period"] <= ma_maximum_period, "ma_period is invalid: " + str(self.conf["ma_period"])
 
 	def long_cnd(self, ma):
 		assert len(ma) == 3, "long_cnd ma invalid len: " + str(len(ma))
@@ -130,8 +130,8 @@ class Trader():
 			trade = abs(self.conf["long_sl"] * self.margin)
 
 			#unittest
-			assert fees > 0, "fees are negative!"
-			assert trade > 0, "trade are negative!"
+			assert fees >= 0, "fees are negative!"
+			assert trade >= 0, "trade are negative!"
 			self.profit -= trade + fees
 
 			#metrics
@@ -149,8 +149,8 @@ class Trader():
 			trade = self.conf["long_tp"] * self.margin  #positive
 
 			#unittest
-			assert fees > 0, "fees are negative!"
-			assert trade > 0, "trade are negative!"
+			assert fees >= 0, "fees are negative!"
+			assert trade >= 0, "trade are negative!"
 
 			self.profit += trade - fees
 
@@ -168,7 +168,7 @@ class Trader():
 		#Close due to short cnd
 		elif self.short_cnd(current_ma):
 			self.long_position = False
-			self.short_position = True
+			self.short_trades = True
 			self.short_trades += 1
 
 			#Trades
@@ -176,7 +176,7 @@ class Trader():
 			trade = (((current_close - self.entry_price) / self.entry_price) * 100) * self.margin
 
 			#unittest
-			assert fees > 0, "fees are negative!"
+			assert fees >= 0, "fees are negative!"
 
 			#If it is a loss
 			if trade < 0:
@@ -226,8 +226,8 @@ class Trader():
 			trade = abs(self.conf["short_sl"] * self.margin) #positive
 
 			#unittest
-			assert fees > 0, "fees are negative!"
-			assert trade > 0, "trade are negative!"
+			assert fees >= 0, "fees are negative!"
+			assert trade >= 0, "trade are negative!"
 
 			self.profit -= trade + fees
 
@@ -245,8 +245,8 @@ class Trader():
 			trade = abs(self.conf["short_tp"] * self.margin) #positive
 
 			#unittest
-			assert fees > 0, "fees are negative!"
-			assert trade > 0, "trade are negative!"
+			assert fees >= 0, "fees are negative!"
+			assert trade >= 0, "trade are negative!"
 
 			self.profit +=  trade - fees
 
@@ -271,7 +271,7 @@ class Trader():
 			trade = (((current_close - self.entry_price) / self.entry_price) * 100) * self.margin
 
 			#unittest
-			assert fees > 0, "fees are negative!"
+			assert fees >= 0, "fees are negative!"
 
 			#If it is a loss
 			if trade > 0:
@@ -308,8 +308,8 @@ class Trader():
 		#Metrics
 		self.profit = 0
 
-		self.profit_over_time = [0]
-		self.profit_over_trades = [0]
+		self.profit_over_time = []
+		self.profit_over_trades = []
 
 		self.long_trades = 0
 		self.short_trades = 0
@@ -335,10 +335,15 @@ class Trader():
 
 	
 	def fitness_func(self):
-		win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
-		lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
+		#win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
+		#lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
 
-		if lose_res == 0:
-			lose_res = 1
-		
-		self.fitness = win_res / lose_res
+		#if lose_res == 0:
+			#lose_res = 1
+		#self.fitness = win_res/lose_res
+
+
+		_, slope, _, _, _, _ = linreg(self.profit_over_time)
+		_, slope2, _, _, _, _ = linreg(self.profit_over_trades)
+		#if slope <= 0:
+		self.fitness = (slope + slope2) / 2
