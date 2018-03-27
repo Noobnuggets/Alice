@@ -6,9 +6,11 @@ from financial_functions import *
 from utils import *
 
 class Trader():
-	def __init__(self, ma_maximum_period, starting_USD=100000, fee=0.1, conf=None, margin=3.3, margin_fee = 0.015):
-		self.usd = starting_USD
+	def __init__(self, ma_maximum_period, starting_usd=100000, fee=0.4, conf=None, margin=3.3, margin_fee = 0.015):
+		self.usd = starting_usd
 		self.usd_over_time = []
+
+
 		self.percent_per_trade = 5
 		self.fee = fee
 
@@ -33,15 +35,14 @@ class Trader():
 		self.loosing_short_trades = 0
 		self.loosing_long_trades = 0
 
-
-
-
 		#conf stuff
 		ma_sources = ["open", "close", "low", "high", "hl2", "hlc3", "ohlc4"]
 		self.conf = conf
 		
-		max_range = 30
+		max_range = 15
 		min_range = 1
+
+		max_sl = 5
 		
 
 		if self.conf is None:
@@ -49,8 +50,8 @@ class Trader():
 			"ma_period":randint(3, ma_maximum_period),
 			"long_tp":uniform(min_range, max_range),
 			"short_tp":uniform(-max_range, -min_range),
-			"long_sl":uniform(-max_range, -min_range),
-			"short_sl":uniform(min_range, max_range),
+			"long_sl":uniform(-max_sl, -min_range),
+			"short_sl":uniform(min_range, max_sl),
 			"ma_source":choice(ma_sources),
 			"ma_func":weighted_moving_average
 			}
@@ -94,6 +95,7 @@ class Trader():
 		assert (self.long_position and not self.short_position) or (self.short_position and not self.long_position) or (not self.short_position and not self.long_position), "More positions.."
 		#Metrics
 		self.profit_over_time.append(self.profit)
+		self.usd_over_time.append(self.usd)
 
 
 		current_ma = self.conf["ma"][-3+current_i:current_i] #three lasts point, used for slope
@@ -346,14 +348,8 @@ class Trader():
 
 	
 	def fitness_func(self):
-		#win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
-		#lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
-		#if lose_res == 0:
-			#lose_res = 1
-
-		#if not self.profit_over_time:
-			#slope = 0
-		#else:
-			#_, slope, _, _, _, _ = linreg(self.profit_over_time)
-		#x, slope, intercept, r_value, p_value, std_err = linreg(self.profit_over_time)
-		self.fitness = self.profit#(slope)# - abs(r_value))
+		win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
+		lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
+		if lose_res == 0:
+			lose_res = 1
+		self.fitness = win_res/lose_res

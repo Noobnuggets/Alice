@@ -175,7 +175,7 @@ def train(candle_period, ma_maximum_period, population_amt, generations, mutatio
 			
 			reset_metrics(traders)
 
-	return traders, average_fitness, best_fitness
+	return traders, average_fitness, best_fitness, best_trader
 
 def validate(traders, candle_period, ma_maximum_period):
 	valid_ohlcv = load_ohlcv_valid(candle_period=candle_period)

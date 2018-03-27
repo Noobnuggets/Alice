@@ -14,12 +14,12 @@ def load_ticks(path):
 	return data_frame
 
 def load_ohlcv_valid(candle_period):
-	ticks = load_ticks("Data/train.csv")
+	ticks = load_ticks("Data/validation.csv")
 	ohlcv = to_ohlcv(ticks, candle_period)
 	return ohlcv
 
 def load_ohlcv(candle_period):
-	ticks = load_ticks("Data/validation.csv")
+	ticks = load_ticks("Data/train.csv")
 	ohlcv = to_ohlcv(ticks, candle_period)
 	return ohlcv
 

@@ -10,14 +10,14 @@ from time import time
 
 def main():
 	candle_period = "1H"
-	ma_maximum_period = 300
-	population_amt = 100 #Change cross over, 2 steps
+	ma_maximum_period = 100
+	population_amt = 300 #Change cross over, 2 steps
 	generations = 100
 	
 	mutation_factor = 0.05 #Mutation factor should be unique to the individual, 
 	#offspring inherit mutation factor either randomly or a convolved version of daddy and mommy
 
-	traders, average_fitness, best_fitness = train(candle_period, ma_maximum_period, population_amt, generations, mutation_factor)
+	traders, average_fitness, best_fitness, best_trader = train(candle_period, ma_maximum_period, population_amt, generations, mutation_factor)
 
 	
 	show_metrics(traders, average_fitness, best_fitness)
@@ -26,4 +26,5 @@ def main():
 	#Validate results
 	validate(traders, candle_period, ma_maximum_period)
 	show_metrics_valid(traders)
+	show_metrics_valid([best_trader])
 main()
