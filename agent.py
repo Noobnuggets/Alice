@@ -112,10 +112,10 @@ class Trader():
 				self.short_position = True
 				self.entry_price = current_price
 		
-		elif self.long_position:# and not self.short_cnd(current_ma):
+		elif self.long_position:
 			self.handle_long(current_high, current_low, current_price, current_i)
 
-		elif self.short_position: #and not self.long_cnd(current_ma):
+		elif self.short_position:
 			self.handle_short(current_high, current_low, current_price, current_i)
 
 
@@ -320,6 +320,7 @@ class Trader():
 
 		self.profit_over_time = []
 		self.profit_over_trades = []
+		self.usd_over_time = []
 
 		self.long_trades = 0
 		self.short_trades = 0
