@@ -2,6 +2,8 @@ from financial_functions import *
 from agent import Trader
 from operator import attrgetter
 from random import uniform, choice, randint
+
+
 def calculate_fitness(traders):
 	new_traders = traders
 	for trader in traders:
@@ -17,7 +19,7 @@ def average_fitness_per_generation(traders):
 def setup_mas(traders, ma_sources):
 	for trader in traders:
 		period = trader.conf["ma_period"]
-		ma_func = trader.conf["ma_func"]
+		ma_func = weighted_moving_average
 		ma_source = trader.conf["ma_source"]
 		trader.conf["ma"] = ma_func(ma_sources[ma_source], period)
 
@@ -43,16 +45,13 @@ def kill_worst(traders, survival_rate):
 
 def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 	new_traders = []
-	parent_idxs = []
-	for i in range(0, len(traders)-1, 2):
+	for i in range(0, len(traders)-1):
 		parent_1_idx = randint(0, len(traders)-1)
 		parent_2_idx = randint(0, len(traders)-1)
-		while parent_1_idx == parent_2_idx or parent_1_idx in parent_idxs or parent_2_idx in parent_idxs:
+		while parent_1_idx == parent_2_idx:
 			parent_1_idx = randint(0, len(traders)-1)
 			parent_2_idx = randint(0, len(traders)-1)
 
-		parent_idxs.append(parent_1_idx)
-		parent_idxs.append(parent_2_idx)
 		parent_1 = traders[parent_1_idx]
 		parent_2 = traders[parent_2_idx]
 		parent_1_dna = parent_1.conf
@@ -64,13 +63,11 @@ def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 		for attr in convolving_attr:
 			if uniform(0, 1) <= mutation_factor:
 				conf[attr] = traders[randint(0, len(traders)-1)].conf[attr]#choice([parent_1_dna[attr], parent_2_dna[attr]])
-			elif uniform(0, 1) <= mutation_factor:
-				conf[attr] = choice([parent_1_dna[attr], parent_2_dna[attr]])
 			else:
-				conf[attr] = (parent_1_dna[attr] + parent_2_dna[attr])/uniform(1.9, 2.1)
+				conf[attr] = (parent_1_dna[attr] + parent_2_dna[attr])/2
 		conf["ma_period"] = int(round(conf["ma_period"]))
 
-		choice_attr = ["ma_source", "ma_func"]
+		choice_attr = ["ma_source"]
 
 		for attr in choice_attr:
 			if uniform(0, 1) <= mutation_factor:
@@ -82,7 +79,6 @@ def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 		#Unittest
 		new_trader = Trader(conf=conf, ma_maximum_period=ma_maximum_period)
 
-		assert type(new_trader.USD) is int or type(new_trader.USD) is float, "starting_USD is invalid: " + str(type(new_trader.USD))
 		assert new_trader.conf["long_tp"] > 0, "long_tp is invalid: " + str(new_trader.conf["long_tp"])
 		assert new_trader.conf["long_sl"] < 0, "long_sl is invalid: " + str(new_trader.conf["long_sl"])
 		assert new_trader.conf["short_tp"] < 0, "short_tp is invalid: " + str(new_trader.conf["short_tp"])
@@ -91,18 +87,29 @@ def crossover(traders, ma_maximum_period, mutation_factor=0.1):
 		assert new_trader.conf["ma_period"] >= 3 and new_trader.conf["ma_period"] <= ma_maximum_period, "ma_period is invalid: " + str(new_trader.conf["ma_period"])
 		
 		new_traders.append(new_trader)
+	print("Kids added:", len(new_traders))
 	return new_traders
 
-def fresh_dna(current_traders, population_amt, ma_maximum_period):
+def fresh_dna(current_traders, population_amt, ma_maximum_period, best_trader):
+	dna_added = 0
+	repeat_added = 0
 	while len(current_traders) < population_amt:
-		current_traders.append(Trader(ma_maximum_period=ma_maximum_period))
+		if uniform(0, 1) < 0.05:
+			current_traders.append(best_trader)
+			repeat_added += 1
+		else:
+			current_traders.append(Trader(ma_maximum_period=ma_maximum_period))
+			dna_added += 1
 
 	assert len(current_traders) == population_amt, "Missmatching len(current_traders) and population_amt\nlen(current_traders): " + str(len(current_traders))+"\npopulation_amt: " + str(population_amt)
-
+	print("New Traders added:", dna_added)
+	print("Best trader re-added:", repeat_added)
+	print()
+	print()
 	return current_traders
 
 
-def train(candle_period, ma_maximum_period, population_amt, generations, survival_rate, mutation_factor):
+def train(candle_period, ma_maximum_period, population_amt, generations, mutation_factor):
 	ohlcv = load_ohlcv(candle_period=candle_period)
 
 	opens = ohlcv.open.values
@@ -127,6 +134,7 @@ def train(candle_period, ma_maximum_period, population_amt, generations, surviva
 	best_fitness = []
 
 	traders = init_population(population_amt=population_amt, ma_maximum_period=ma_maximum_period)
+	best_trader = traders[0]
 	setup_mas(traders, ma_sources=ma_sources)
 
 	for gen in range(generations):
@@ -135,6 +143,8 @@ def train(candle_period, ma_maximum_period, population_amt, generations, surviva
 		for i in range(ma_maximum_period+3, len(closes)):
 			for trader in traders:
 				trader.event(i, closes[i], lows[i], highs[i])
+				if trader.fitness > best_trader.fitness:
+					best_trader = trader
 
 		
 		#Generation done
@@ -142,22 +152,23 @@ def train(candle_period, ma_maximum_period, population_amt, generations, surviva
 		traders = calculate_fitness(traders)
 		average_fitness.append(average_fitness_per_generation(traders))
 
-
+		best_fitness.append(traders[0].fitness)
 		#Sort traders based on performance
 		traders = sort_traders(traders)
-
-		best_fitness.append(traders[0].fitness)
+		conf = traders[0].conf
 		print(gen, "best:", traders[0].fitness)
 		print(gen, "avg:", average_fitness[gen])
-		print()
+
 
 		if not gen+1 == generations:
+			survival_rate = gen/generations
+			print("survival_rate:", survival_rate)
 			#Remove the worst traders
 			#Create children from the best traders, aka crossover
 			traders = kill_worst(traders, survival_rate=survival_rate)
 			traders = crossover(traders, ma_maximum_period, mutation_factor=mutation_factor ) #Crossover creates some individuals without fitness
 
-			traders = fresh_dna(traders, population_amt, ma_maximum_period)
+			traders = fresh_dna(traders, population_amt, ma_maximum_period, best_trader)
 			setup_mas(traders, ma_sources=ma_sources)
 
 			#Reset metrics for traders for next generation

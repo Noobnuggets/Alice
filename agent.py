@@ -5,13 +5,11 @@ from random import uniform, randint, choice
 from financial_functions import *
 from utils import *
 
-def delta_y(points):
-	deltas = []
-	for i in range(int(round(len(points)/2))):pass
-
 class Trader():
 	def __init__(self, ma_maximum_period, starting_USD=100000, fee=0.1, conf=None, margin=3.3, margin_fee = 0.015):
-		self.USD = starting_USD
+		self.usd = starting_USD
+		self.usd_over_time = []
+		self.percent_per_trade = 5
 		self.fee = fee
 
 		#Metrics
@@ -40,11 +38,12 @@ class Trader():
 
 		#conf stuff
 		ma_sources = ["open", "close", "low", "high", "hl2", "hlc3", "ohlc4"]
-		ma_types = [hull_moving_average, weighted_moving_average, exponential_moving_average]
 		self.conf = conf
 		
-		max_range = 50
+		max_range = 30
 		min_range = 1
+		
+
 		if self.conf is None:
 			self.conf = {
 			"ma_period":randint(3, ma_maximum_period),
@@ -53,7 +52,7 @@ class Trader():
 			"long_sl":uniform(-max_range, -min_range),
 			"short_sl":uniform(min_range, max_range),
 			"ma_source":choice(ma_sources),
-			"ma_func":choice(ma_types),
+			"ma_func":weighted_moving_average
 			}
 
 		#Trading
@@ -64,9 +63,11 @@ class Trader():
 		self.profit_ratio = 0
 		self.margin = margin
 		self.margin_fee = margin_fee
+
+		self.fitness = 0
 		
 		#Unittest
-		assert type(self.USD) is int or type(self.USD) is float, "starting_USD is invalid: " + str(type(self.USD))
+
 		assert self.conf["long_tp"] > 0, "long_tp is invalid: " + str(self.conf["long_tp"])
 		assert self.conf["long_sl"] < 0, "long_sl is invalid: " + str(self.conf["long_sl"])
 		assert self.conf["short_tp"] < 0, "short_tp is invalid: " + str(self.conf["short_tp"])
@@ -76,11 +77,18 @@ class Trader():
 
 	def long_cnd(self, ma):
 		assert len(ma) == 3, "long_cnd ma invalid len: " + str(len(ma))
-		return ma[1] < ma[2] and ma[0] > ma[1]
+		delta_1 = ma[0] - ma[1]
+		delta_2 = ma[1] - ma[2]
+
+
+		return delta_1 > 0 and delta_2 < 0
 
 	def short_cnd(self, ma):
 		assert len(ma) == 3, "long_cnd ma invalid len: " + str(len(ma))
-		return ma[1] > ma[2] and ma[0] < ma[1]
+		delta_1 = ma[0] - ma[1]
+		delta_2 = ma[1] - ma[2]
+
+		return delta_1 < 0 and delta_2 > 0
 
 	def event(self, current_i, current_price, current_low, current_high): 
 		assert (self.long_position and not self.short_position) or (self.short_position and not self.long_position) or (not self.short_position and not self.long_position), "More positions.."
@@ -104,10 +112,10 @@ class Trader():
 				self.short_position = True
 				self.entry_price = current_price
 		
-		elif self.long_position:
+		elif self.long_position:# and not self.short_cnd(current_ma):
 			self.handle_long(current_high, current_low, current_price, current_i)
 
-		elif self.short_position:
+		elif self.short_position: #and not self.long_cnd(current_ma):
 			self.handle_short(current_high, current_low, current_price, current_i)
 
 
@@ -168,8 +176,8 @@ class Trader():
 		#Close due to short cnd
 		elif self.short_cnd(current_ma):
 			self.long_position = False
-			#self.short_trades = True
-			#self.short_trades += 1
+			self.short_trades = True
+			self.short_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive
@@ -206,6 +214,7 @@ class Trader():
 					self.loosing_trades += 1
 					self.loosing_long_trades += 1
 					self.profit_over_trades.append(self.profit)
+			self.event(current_i, current_close, current_low, current_high)
 
 	def handle_short(self, current_high, current_low, current_close, current_i):
 		assert self.short_position
@@ -263,8 +272,8 @@ class Trader():
 		#Close due to long cnd
 		elif self.long_cnd(current_ma):
 			self.short_position = False
-			#self.long_position = True
-			#self.long_trades += 1
+			self.long_position = True
+			self.long_trades += 1
 
 			#Trades
 			fees = (self.fee * 2) + (self.margin_fee * 2) #positive
@@ -275,7 +284,7 @@ class Trader():
 
 			#If it is a loss
 			if trade > 0:
-				self.profit -= abs(trade) + fees
+				self.profit -= trade + fees
 
 				#Metrics
 				self.loosing_trades += 1
@@ -301,6 +310,7 @@ class Trader():
 					self.loosing_trades += 1
 					self.loosing_short_trades += 1
 					self.profit_over_trades.append(self.profit)
+			self.event(current_i, current_close, current_low, current_high)
 
 
 	def reset(self):
@@ -337,15 +347,12 @@ class Trader():
 	def fitness_func(self):
 		#win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
 		#lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
-
 		#if lose_res == 0:
 			#lose_res = 1
-		#self.fitness = win_res/lose_res
 
-
-		_, slope, _, _, _, _ = linreg(self.profit_over_time)
-		#_, slope2, _, _, _, _ = linreg(self.profit_over_trades)
-		if slope <= 0:
-			self.fitness = slope
-		else:
-			self.fitness = slope**2
+		#if not self.profit_over_time:
+			#slope = 0
+		#else:
+			#_, slope, _, _, _, _ = linreg(self.profit_over_time)
+		#x, slope, intercept, r_value, p_value, std_err = linreg(self.profit_over_time)
+		self.fitness = self.profit#(slope)# - abs(r_value))
