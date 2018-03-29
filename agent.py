@@ -6,7 +6,7 @@ from financial_functions import *
 from utils import *
 
 class Trader():
-	def __init__(self, ma_maximum_period, starting_usd=100000, fee=0.4, conf=None, margin=3.3, margin_fee = 0.015):
+	def __init__(self, ma_maximum_period, starting_usd=100000, fee=0.2, conf=None, margin=3.3, margin_fee = 0.015):
 		self.usd = starting_usd
 		self.usd_over_time = []
 
@@ -39,7 +39,7 @@ class Trader():
 		ma_sources = ["open", "close", "low", "high", "hl2", "hlc3", "ohlc4"]
 		self.conf = conf
 		
-		max_range = 15
+		max_range = 10
 		min_range = 1
 
 		max_sl = 5
@@ -53,7 +53,7 @@ class Trader():
 			"long_sl":uniform(-max_sl, -min_range),
 			"short_sl":uniform(min_range, max_sl),
 			"ma_source":choice(ma_sources),
-			"ma_func":weighted_moving_average
+			"ma_func":exponential_moving_average
 			}
 
 		#Trading
@@ -78,6 +78,11 @@ class Trader():
 
 	def long_cnd(self, ma):
 		assert len(ma) == 3, "long_cnd ma invalid len: " + str(len(ma))
+		print(ma)
+		print(ma[0])
+		print(ma[1])
+		print(ma[2])
+		u
 		delta_1 = ma[0] - ma[1]
 		delta_2 = ma[1] - ma[2]
 
@@ -348,8 +353,9 @@ class Trader():
 
 	
 	def fitness_func(self):
-		win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
-		lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
-		if lose_res == 0:
-			lose_res = 1
-		self.fitness = win_res/lose_res
+		#win_res = abs((self.winning_short_trades * self.conf["short_tp"])) + (self.winning_long_trades * self.conf["long_tp"])
+		#lose_res = (self.loosing_short_trades * self.conf["short_sl"]) + abs((self.loosing_long_trades * self.conf["long_sl"]))
+		#if lose_res == 0:
+		#	lose_res = 1
+		#self.fitness = win_res/lose_res
+		self.fitness = avg_profit_per_day(self.profit_over_trades)

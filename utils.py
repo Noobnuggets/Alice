@@ -10,16 +10,12 @@ def load_ticks(path):
 							converters={"price":float, "volume":float})
 
 	data_frame = data_frame.set_index(["dates"])
-	data_frame.index = pd.to_datetime(data_frame.index, unit='s')
+	data_frame.index = pd.to_datetime(data_frame.index, unit="s")
 	return data_frame
 
-def load_ohlcv_valid(candle_period):
-	ticks = load_ticks("Data/validation.csv")
-	ohlcv = to_ohlcv(ticks, candle_period)
-	return ohlcv
 
-def load_ohlcv(candle_period):
-	ticks = load_ticks("Data/train.csv")
+def load_ohlcv(candle_period, path):
+	ticks = load_ticks(path)
 	ohlcv = to_ohlcv(ticks, candle_period)
 	return ohlcv
 
@@ -96,21 +92,16 @@ def show_metrics_valid(traders):
 	print("Best Trader")
 	conf = traders[0].conf
 	print("Ma period:", conf["ma_period"])
-	print()
 	print("(L) take profit:", conf["long_tp"], "%")
 	print("(S) take profit:", abs(conf["short_tp"]), "%")
 	print("(L) stop loss:", abs(conf["long_sl"]), "%")
 	print("(S) stop loss", conf["short_sl"], "%")
-	print()
 	print("Ma source:", conf["ma_source"])
-	print()
 	print("Long trades:", traders[0].long_trades)
 	print("short trades:", traders[0].short_trades)
 	print("Total trades:", traders[0].long_trades + traders[0].short_trades)
-	print()
 	print("winning trades: ", traders[0].winning_trades)
 	print("loosing trades: ", traders[0].loosing_trades)
-	print()
 	print("Final profit:", traders[0].profit, "%")
 
 	plt.title("Best Profit over trades")
@@ -134,3 +125,17 @@ def linreg(y):
 def visual_linreg(y):
 	x, slope, intercept, r_value, p_value, std_err = linreg(y)
 	return x, intercept + slope*x
+
+def load_all_data(candle_period, path):
+	ohlcv = load_ohlcv(candle_period, path)
+
+def avg_profit_per_day(profit_over_trades):
+	return np.sum(profit_over_trades)/len(profit_over_trades)
+
+def profit_per_day(profit_over_time):
+	#Assume candles were 1hr each
+	days = []
+	for i in range(0, len(profit_over_time), 24):
+		days.append(np.sum(profit_over_time[i:i+24])/24)
+	plt.bar(np.arange(len(days)), days)
+	plt.show()

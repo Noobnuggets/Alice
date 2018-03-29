@@ -19,7 +19,7 @@ def average_fitness_per_generation(traders):
 def setup_mas(traders, ma_sources):
 	for trader in traders:
 		period = trader.conf["ma_period"]
-		ma_func = weighted_moving_average
+		ma_func = exponential_moving_average
 		ma_source = trader.conf["ma_source"]
 		trader.conf["ma"] = ma_func(ma_sources[ma_source], period)
 
@@ -109,8 +109,8 @@ def fresh_dna(current_traders, population_amt, ma_maximum_period, best_trader):
 	return current_traders
 
 
-def train(candle_period, ma_maximum_period, population_amt, generations, mutation_factor):
-	ohlcv = load_ohlcv(candle_period=candle_period)
+def train(candle_period, ma_maximum_period, population_amt, generations, mutation_factor, max_survival_factor):
+	ohlcv = load_ohlcv(candle_period=candle_period, path="Data/validation.csv")
 
 	opens = ohlcv.open.values
 	highs = ohlcv.high.values
@@ -162,6 +162,8 @@ def train(candle_period, ma_maximum_period, population_amt, generations, mutatio
 
 		if not gen+1 == generations:
 			survival_rate = gen/generations
+			if survival_rate > max_survival_factor:
+				survival_rate = max_survival_factor
 			print("survival_rate:", survival_rate)
 			#Remove the worst traders
 			#Create children from the best traders, aka crossover
@@ -178,7 +180,7 @@ def train(candle_period, ma_maximum_period, population_amt, generations, mutatio
 	return traders, average_fitness, best_fitness, best_trader
 
 def validate(traders, candle_period, ma_maximum_period):
-	valid_ohlcv = load_ohlcv_valid(candle_period=candle_period)
+	valid_ohlcv = load_ohlcv(candle_period=candle_period, path="Data/train.csv")
 
 	valid_opens = valid_ohlcv.open.values
 	valid_highs = valid_ohlcv.high.values
