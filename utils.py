@@ -35,18 +35,18 @@ def normalize(array):
 def show_metrics(traders, average_fitness, best_fitness):
 	print("Best Trader")
 	conf = traders[0].conf
-	print("Ma period:", conf["ma_period"])
-	print()
+	print("Fast MA:", conf["fast_ma_period"])
+	print("Slow MA:", conf["slow_ma_period"])
+	print("Signal Period:", conf["signal_period"])
 	print("(L) take profit:", conf["long_tp"], "%")
 	print("(S) take profit:", abs(conf["short_tp"]), "%")
 	print("(L) stop loss:", abs(conf["long_sl"]), "%")
 	print("(S) stop loss", conf["short_sl"], "%")
 	print()
-	print("Ma source:", conf["ma_source"])
+	print("Ma source:", conf["source"])
 	print()
 	print("Long trades:", traders[0].long_trades)
 	print("short trades:", traders[0].short_trades)
-	print("Total trades:", traders[0].long_trades + traders[0].short_trades)
 	print()
 	print("winning trades: ", traders[0].winning_trades)
 	print("loosing trades: ", traders[0].loosing_trades)
@@ -91,12 +91,14 @@ def show_metrics_valid(traders):
 
 	print("Best Trader")
 	conf = traders[0].conf
-	print("Ma period:", conf["ma_period"])
+	print("Fast MA:", conf["fast_ma_period"])
+	print("Slow MA:", conf["slow_ma_period"])
+	print("Signal Period:", conf["signal_period"])
 	print("(L) take profit:", conf["long_tp"], "%")
 	print("(S) take profit:", abs(conf["short_tp"]), "%")
 	print("(L) stop loss:", abs(conf["long_sl"]), "%")
 	print("(S) stop loss", conf["short_sl"], "%")
-	print("Ma source:", conf["ma_source"])
+	print("Ma source:", conf["source"])
 	print("Long trades:", traders[0].long_trades)
 	print("short trades:", traders[0].short_trades)
 	print("Total trades:", traders[0].long_trades + traders[0].short_trades)
@@ -129,8 +131,10 @@ def visual_linreg(y):
 def load_all_data(candle_period, path):
 	ohlcv = load_ohlcv(candle_period, path)
 
-def avg_profit_per_day(profit_over_trades):
-	return np.sum(profit_over_trades)/len(profit_over_trades)
+def avg_profit_per_trade(profit_over_trades):
+	if len(profit_over_trades):
+		return np.sum(profit_over_trades)/len(profit_over_trades)
+	return 0
 
 def profit_per_day(profit_over_time):
 	#Assume candles were 1hr each
