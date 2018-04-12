@@ -10,10 +10,10 @@ from time import time
 
 def main():
 	candle_period = "1H"
-	max_lookback = 200
+	max_lookback = 100
 	population_amt = 100
 	generations = 100
-	max_survival_factor = 0.8
+	max_survival_factor = 1
 	
 	mutation_factor = 0.05 #Mutation factor should be unique to the individual, 
 	#offspring inherit mutation factor either randomly or a convolved version of daddy and mommy
@@ -27,8 +27,10 @@ def main():
 	traders[0].report_metrics()
 
 	plot(traders[0].metrics["profit_over_time"], "Training Profit/Time")
+	
 	plot(traders[0].metrics["profit_over_trades"], "Training Profit/Trades")
 
+	plot(traders[0].metrics["usd_over_time"], "Training USD equity/Time")
 
 	
 	#Validate results
@@ -41,6 +43,8 @@ def main():
 	plot(traders[0].metrics["profit_over_time"], "Validation Profit/Time")
 
 	plot(traders[0].metrics["profit_over_trades"], "Validation Profit/Trades")
+
+	plot(traders[0].metrics["usd_over_time"], "Validation USD equity/Time")
 
 
 

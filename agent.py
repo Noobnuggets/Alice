@@ -4,14 +4,22 @@ import matplotlib.pyplot as plt
 from random import uniform, randint, choice
 from financial_functions import *
 from utils import *
+def usd_from_percent(p, usd, sat):
+	usd = ((sat/100) * usd) * (p/100)
+	return abs(usd)
 
 class Trader():
-	def __init__(self, max_lookback, starting_usd=100000, fee=0.2, conf=None, margin=3.3, margin_fee = 0.015):
-		self.percent_per_trade = 5
+	def __init__(self, max_lookback, starting_usd=1000, fee=0.2, conf=None, margin=3.3, margin_fee = 0.015):
+
+		#Position sizing
+		#Collect data
+		self.trade_data = []
+
+		self.percent_per_trade = 100
 		self.fee = fee
 		self.starting_usd = starting_usd
 		#Metrics
-		self.metrics = {"usd":starting_usd,
+		self.metrics = {"current_usd":starting_usd,
 						"usd_over_time":[],
 
 						"profit":0,
@@ -62,8 +70,7 @@ class Trader():
 			"long_sl":randint(-max_sl, -min_sl),
 			"short_sl":randint(min_sl, max_sl),
 
-			"source":choice(sources),
-			"volume_factor":uniform(1, 2)
+			"source":choice(sources)
 			}
 
 		#Trading
@@ -100,7 +107,7 @@ class Trader():
 		assert (self.long_position and not self.short_position) or (self.short_position and not self.long_position) or (not self.short_position and not self.long_position), "More positions.."
 		#Metrics
 		self.metrics["profit_over_time"].append(self.metrics["profit"]) #done
-		self.metrics["usd_over_time"].append(self.metrics["usd"]) #done
+		self.metrics["usd_over_time"].append(self.metrics["current_usd"]) #done
 
 
 		current_macd = self.conf["macd"][-2+current_i:current_i]
@@ -157,7 +164,15 @@ class Trader():
 			#metrics
 			self.metrics["long_trades_miss"] += 1 #done
 			self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+			
+			#Calculate USD loss
+			p = -(trade + fees)
+			usd = self.metrics["current_usd"]
+			sat = self.percent_per_trade
+			usd_loss = usd_from_percent(p, usd, sat)
+			
 
+			self.metrics["current_usd"] -= usd_loss
 
 		#Close long with take-profit
 		elif tp_hit and not sl_hit:
@@ -176,6 +191,15 @@ class Trader():
 			#Metrics
 			self.metrics["long_trades_hit"] += 1 #done
 			self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+
+			#Calculate USD loss
+			p = (trade + fees)
+			usd = self.metrics["current_usd"]
+			sat = self.percent_per_trade
+			usd_profit = usd_from_percent(p, usd, sat)
+			
+
+			self.metrics["current_usd"] += usd_profit
 
 
 		elif tp_hit and sl_hit:
@@ -197,6 +221,9 @@ class Trader():
 			#unittest
 			assert fees >= 0, "fees are negative!"
 
+			#Calculate USD loss
+				
+
 			#If it is a loss
 			if trade < 0:
 				self.metrics["profit"] -= abs(trade) + fees
@@ -204,6 +231,15 @@ class Trader():
 				#Metrics
 				self.metrics["long_trades_flip_miss"] += 1 #done
 				self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+
+				#Calculate USD loss
+				p = -(abs(trade) + fees)
+				usd = self.metrics["current_usd"]
+				sat = self.percent_per_trade
+				usd_loss = usd_from_percent(p, usd, sat)
+				
+
+				self.metrics["current_usd"] -= usd_loss
 			
 			#if it is a win
 			elif trade > 0:
@@ -215,6 +251,15 @@ class Trader():
 					self.metrics["long_trades_flip_win"] += 1 #done
 					self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
 
+					#Calculate USD profit
+					p = (trade - fees)
+					usd = self.metrics["current_usd"]
+					sat = self.percent_per_trade
+					usd_profit = usd_from_percent(p, usd, sat)
+					
+
+					self.metrics["current_usd"] += usd_profit
+
 				#otherwise
 				else:
 					self.metrics["profit"] += trade - fees #negative
@@ -222,6 +267,15 @@ class Trader():
 					#Metrics
 					self.metrics["long_trades_flip_miss"] += 1 #done
 					self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+
+					#Calculate USD loss
+					p = (trade - fees)
+					usd = self.metrics["current_usd"]
+					sat = self.percent_per_trade
+					usd_loss = usd_from_percent(p, usd, sat)
+					
+
+					self.metrics["current_usd"] -= usd_loss
 
 	def handle_short(self, current_high, current_low, current_close, current_i):
 		assert self.short_position
@@ -251,6 +305,15 @@ class Trader():
 			self.metrics["short_trades_miss"] += 1 #done
 			self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
 
+			#Calculate USD loss
+			p = -(trade + fees)
+			usd = self.metrics["current_usd"]
+			sat = self.percent_per_trade
+			usd_loss = usd_from_percent(p, usd, sat)
+			
+
+			self.metrics["current_usd"] -= usd_loss
+
 		#Close short with take-profit
 		elif tp_hit and not sl_hit:
 			self.short_position = False
@@ -268,6 +331,15 @@ class Trader():
 			#Metrics
 			self.metrics["short_trades_hit"] += 1 #done
 			self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+
+			#Calculate USD loss
+			p = (trade - fees)
+			usd = self.metrics["current_usd"]
+			sat = self.percent_per_trade
+			usd_profit = usd_from_percent(p, usd, sat)
+			
+
+			self.metrics["current_usd"] -= usd_profit
 
 		elif tp_hit and sl_hit:
 			self.short_position = False
@@ -298,6 +370,15 @@ class Trader():
 				#Metrics
 				self.metrics["short_trades_flip_miss"] += 1 #done
 				self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
+
+				#Calculate USD loss
+				p = -(abs(trade) + fees)
+				usd = self.metrics["current_usd"]
+				sat = self.percent_per_trade
+				usd_loss = usd_from_percent(p, usd, sat)
+				
+
+				self.metrics["current_usd"] -= usd_loss
 			
 			#if it is a win
 			elif trade < 0:
@@ -309,6 +390,15 @@ class Trader():
 					self.metrics["short_trades_flip_win"] += 1 #done
 					self.metrics["profit_over_trades"].append(self.metrics["profit"]) #done
 
+					#Calculate USD profit
+					p = (abs(trade) - fees)
+					usd = self.metrics["current_usd"]
+					sat = self.percent_per_trade
+					usd_profit = usd_from_percent(p, usd, sat)
+					
+
+					self.metrics["current_usd"] += usd_profit
+
 				#otherwise
 				else:
 					self.metrics["profit"] -= trade + fees #negative 
@@ -318,11 +408,20 @@ class Trader():
 					self.metrics["short_trades_flip_miss"] += 1 #done
 					self.metrics["profit_over_trades"].append(self.metrics["profit"])
 
+					#Calculate USD loss
+					p = -(trade + fees)
+					usd = self.metrics["current_usd"]
+					sat = self.percent_per_trade
+					usd_loss = usd_from_percent(p, usd, sat)
+					
+
+					self.metrics["current_usd"] -= usd_loss
+
 
 	def reset(self):
 
 		#Metrics
-		self.metrics = {"usd":self.starting_usd,
+		self.metrics = {"current_usd":self.starting_usd,
 						"usd_over_time":[],
 
 						"profit":0,
@@ -399,8 +498,12 @@ class Trader():
 
 
 	def fitness_func(self):
+		#if self.metrics["total_trades"]:
+			#self.fitness = np.sum(self.metrics["profit_over_trades"]) / self.metrics["total_trades"]
+		#else:
+			#self.fitness = 0
+		#self.fitness = self.metrics["profit"]
 		if self.metrics["total_trades"]:
-			self.fitness = np.sum(self.metrics["profit_over_trades"]) / self.metrics["total_trades"]
+			self.fitness = self.metrics["current_usd"] / self.metrics["total_trades"]
 		else:
 			self.fitness = 0
-		#self.fitness = self.metrics["profit"]
