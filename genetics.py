@@ -159,9 +159,9 @@ def train(candle_period, max_lookback, population_amt, generations, mutation_fac
 		#Sort traders based on performance
 		traders = sort_traders(traders)
 		conf = traders[0].conf
-		print(gen, "best profit:", traders[0].profit)
-		print(gen, "best:", traders[0].fitness)
-		print(gen, "avg:", average_fitness[gen])
+		print(gen, "best profit:", traders[0].metrics["profit"])
+		print(gen, "best fitness:", traders[0].fitness)
+		print(gen, "avg fitness:", average_fitness[gen])
 
 
 		if not gen+1 == generations:
@@ -183,7 +183,7 @@ def train(candle_period, max_lookback, population_amt, generations, mutation_fac
 
 	return traders, average_fitness, best_fitness, best_trader
 
-def validate(traders, candle_period, max_lookback):
+def validate(trader, candle_period, max_lookback):
 	valid_ohlcv = load_ohlcv(candle_period=candle_period, path="Data/validation.csv")
 
 	valid_opens = valid_ohlcv.open.values
@@ -203,13 +203,9 @@ def validate(traders, candle_period, max_lookback):
 		"ohlc4":(valid_opens+valid_highs+valid_lows+valid_closes)/4
 		}
 
-	setup_macd(traders, sources=valid_sources)
+	setup_macd([trader], sources=valid_sources)
 
-	#Metrics
-	average_fitness = []
-	best_fitness = []
 	#Test every trader on every trade oppurtinity/candle
-	reset_metrics(traders)
 	for i in range(max_lookback+3, len(valid_closes)):
-		for trader in traders:
-			trader.event(i, valid_closes[i], valid_lows[i], valid_highs[i])
+		trader.event(i, valid_closes[i], valid_lows[i], valid_highs[i])
+

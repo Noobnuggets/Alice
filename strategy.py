@@ -10,28 +10,38 @@ from time import time
 
 def main():
 	candle_period = "1H"
-	max_lookback = 50
-	population_amt = 50
+	max_lookback = 200
+	population_amt = 100
 	generations = 100
-	max_survival_factor = 1
+	max_survival_factor = 0.8
 	
 	mutation_factor = 0.05 #Mutation factor should be unique to the individual, 
 	#offspring inherit mutation factor either randomly or a convolved version of daddy and mommy
 
 	traders, average_fitness, best_fitness, best_trader = train(candle_period, max_lookback, population_amt, generations, mutation_factor, max_survival_factor)
+	
+	plot(average_fitness, "Average fitness")
+	plot(best_fitness, "Best fitness")
+
+	traders[0].report_conf()
+	traders[0].report_metrics()
+
+	plot(traders[0].metrics["profit_over_time"], "Training Profit/Time")
+	plot(traders[0].metrics["profit_over_trades"], "Training Profit/Trades")
+
 
 	
-	show_metrics(traders, average_fitness, best_fitness)
-	reset_metrics(traders)
 	#Validate results
-	validate(traders, candle_period, max_lookback)
-	show_metrics_valid(traders)
+	reset_metrics([traders[0]])
+	validate(traders[0], candle_period, max_lookback)
 
-	print("Best Trader of all time stats")
-	reset_metrics([best_trader])
-	#Validate results
-	validate([best_trader], candle_period, max_lookback)
-	show_metrics_valid([best_trader])
+	traders[0].report_conf()
+	traders[0].report_metrics()
+
+	plot(traders[0].metrics["profit_over_time"], "Validation Profit/Time")
+
+	plot(traders[0].metrics["profit_over_trades"], "Validation Profit/Trades")
+
 
 
 main()
